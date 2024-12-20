@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import path from 'path';
 const app = express();
 const port = 8080;
@@ -9,12 +9,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send(messages.home);
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.post('/submit', (req, res) => {
-    console.log(`here`);
-  console.log(req.body);
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
