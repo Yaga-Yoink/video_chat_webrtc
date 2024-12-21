@@ -33,4 +33,22 @@ Server should also handle text messages from users and requesting a new video pa
 
 
 Run http-server to start the html website
+    npx tsx src/index.ts
 Run node src/app.ts to start the server
+
+Notes to Self:
+    - Html requires the = sign to be directly next to parameters, no spaces allowed
+    - Express is a js library used for handling routing
+    - Nodejs is a runtime environment that enables developers to run js outside of the browser
+    - Npm is node package manager
+    
+
+12/20/2024
+Simple mern website
+mongodb, express, reactjs, node
+    - use vite to build starter code for front end
+        npm create vite@latest client --template react-ts
+prettier code formatting
+    -npx i prettier --save-dev
+    -npx prettier . --write
+    

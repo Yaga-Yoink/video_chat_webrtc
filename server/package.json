@@ -2,11 +2,9 @@
   "name": "video_chat_webrtc",
   "version": "1.0.0",
   "description": "A webrtc video conference and text chat website.",
-  "main": "src/server/app.ts",
+  "main": "server/server.ts",
   "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon src/server/server.ts",
-    "client": "tsc --watch",
+    "server": "nodemon src/server.ts",
     "build": "tsc"
   },
   "author": "",
@@ -17,8 +15,8 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.2",
-    "concurrently": "^7.0.0",
-    "nodemon": "^2.0.15",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
