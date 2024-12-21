@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import "./videochat.tsx";
-import VideoChat from "./videochat.tsx";
+import "./localvideochat.tsx";
+import LocalVideoChat from "./localvideochat.tsx";
+import RemoteVideoChat from "./remotevideochat.tsx";
 
 function App() {
   const [data, setData] = useState("before fetching");
@@ -27,7 +28,8 @@ function App() {
         <p>{data.toString()}</p>
       </div>
       <button onClick={handleClick}>Next Person</button>
-      <VideoChat updateTrigger={updateTrigger} />
+      <LocalVideoChat updateTrigger={updateTrigger} />
+      <RemoteVideoChat updateTrigger={updateTrigger} />
     </>
   );
 }
