@@ -25,7 +25,7 @@ const VideoChat: FC<VideoChatProps> = ({ updateTrigger }) => {
   return (
     <div>
       <p>hello im here</p>
-      <video controls width="250" ref={videoRef} autoPlay></video>
+      <video width="250" ref={videoRef} autoPlay></video>
     </div>
   );
 };
