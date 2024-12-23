@@ -36,3 +36,5 @@ prettier code formatting
     adfads
 
 12/23/2024 - need to figure out how to determine which person is the receiver and which person is the caller - server adds people to queue one at at time - when queue has more than two people make a room - designate one person as a caller one person as a receiver - ping each one and ask for a call and receive
+
+- need to fix the issue with many peer connections being made for each client request
