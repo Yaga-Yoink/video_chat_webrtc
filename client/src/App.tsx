@@ -73,6 +73,12 @@ function App() {
 
   async function makeOffer() {
     if (!peerConnectionRef.current) return;
+    peerConnectionRef.current.addTransceiver("video", {
+      direction: "sendrecv",
+    });
+    peerConnectionRef.current.addTransceiver("audio", {
+      direction: "sendrecv",
+    });
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit("sdp_offer_server", offer);
