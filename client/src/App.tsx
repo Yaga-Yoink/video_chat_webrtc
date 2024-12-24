@@ -11,8 +11,9 @@ const configuration = {
 };
 
 function App() {
-  const [updateTrigger, setUpdateTrigger] = useState(0);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [updateTrigger, setUpdateTrigger] = useState(false);
 
   useEffect(() => {
     if (!peerConnectionRef.current) {
@@ -55,6 +56,13 @@ function App() {
       if (event.candidate) {
         console.log("new ice candidate (client)");
         socket.emit("new_ice_candidate", event.candidate);
+      }
+    });
+    peerConnectionRef.current.addEventListener("track", (event) => {
+      const [remoteStream] = event.streams;
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+        setUpdateTrigger(!updateTrigger);
       }
     });
 
@@ -109,17 +117,24 @@ function App() {
     }
   }
 
-  function handleClick() {
-    socket.emit("message", "next person");
-    setUpdateTrigger(updateTrigger + 1);
+  //TODO: add the functioanlity to switch to next person
+  async function handleClick() {
+    const constraints = { audio: true, video: true };
+    const localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    localStream.getTracks().forEach((track) => {
+      peerConnectionRef.current?.addTrack(track, localStream);
+    });
   }
 
   return (
     <>
       <div className="card"></div>
       <button onClick={handleClick}>Next Person</button>
-      <LocalVideoChat updateTrigger={updateTrigger} />
-      <RemoteVideoChat updateTrigger={updateTrigger} />
+      <LocalVideoChat />
+      <RemoteVideoChat
+        remoteVideoRef={remoteVideoRef}
+        updateTrigger={updateTrigger}
+      />
     </>
   );
 }

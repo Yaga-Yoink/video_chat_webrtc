@@ -2,9 +2,10 @@ import { FC } from "react";
 
 interface VideoChatProps {
   videoRef: React.RefObject<HTMLVideoElement>;
+  updateTrigger: boolean;
 }
 
-const VideoChat: FC<VideoChatProps> = ({ videoRef }) => {
+const VideoChat: FC<VideoChatProps> = ({ videoRef, updateTrigger }) => {
   return (
     <div>
       <p>hello im here</p>

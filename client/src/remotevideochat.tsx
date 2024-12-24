@@ -1,14 +1,16 @@
-import { useRef, FC, useEffect } from "react";
+import { FC } from "react";
 import VideoChat from "./videochat";
 
 interface VideoChatProps {
-  updateTrigger: number;
+  remoteVideoRef: React.MutableRefObject<HTMLVideoElement | null>;
+  updateTrigger: boolean;
 }
 
-const RemoteVideoChat: FC<VideoChatProps> = ({ updateTrigger }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  return <VideoChat videoRef={videoRef} />;
+const RemoteVideoChat: FC<VideoChatProps> = ({
+  remoteVideoRef,
+  updateTrigger,
+}) => {
+  return <VideoChat videoRef={remoteVideoRef} updateTrigger={updateTrigger} />;
 };
 
 export default RemoteVideoChat;
