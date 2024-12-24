@@ -22,6 +22,22 @@ function printRoomSocketIds() {
   });
 }
 
+/**
+ * Return the other person in the room give a user's opened socket
+ * @param socket the user's opened socket with the srever
+ */
+function otherPerson(socket: any) {
+  let roomid = user_to_roomid.get(socket.id);
+  if (roomid) {
+    let other_user = roomid_to_room
+      .get(roomid)
+      ?.find((elem) => elem.id !== socket.id);
+    return other_user;
+  } else {
+    console.error("Room ID not found for the user");
+  }
+}
+
 app.use(cors());
 
 io.on("connection", (socket: any) => {
@@ -47,36 +63,19 @@ io.on("connection", (socket: any) => {
     console.log(`sdp offer was received from client`);
     // once the offer is received from client, ask other user for answer
     let roomid = user_to_roomid.get(socket.id);
-    if (roomid) {
-      let other_user = roomid_to_room
-        .get(roomid)
-        ?.find((elem) => elem.id !== socket.id);
-      if (other_user) {
-        console.log(other_user.id, socket.id);
-        other_user.emit("sdp_answer_client", offer);
-      } else {
-        console.error("Other user not found in the room");
-      }
-    } else {
-      console.error("Room ID not found for the user");
-    }
+    let other_user = otherPerson(socket);
+    console.log(other_user.id, socket.id);
+    other_user.emit("sdp_answer_client", offer);
   });
   // take the answer from user B and send it to user A
   socket.on("sdp_answer_server", (answer: any) => {
     console.log("sdp answer was received");
-    let roomid = user_to_roomid.get(socket.id);
-    if (roomid) {
-      let other_user = roomid_to_room
-        .get(roomid)
-        ?.find((elem) => elem.id !== socket.id);
-      if (other_user) {
-        other_user.emit("sdp_finish_client", answer);
-      } else {
-        console.error("Other user not found in the room");
-      }
-    } else {
-      console.error("Room ID not found for the user");
-    }
+    let other_user = otherPerson(socket);
+    other_user.emit("sdp_finish_client", answer);
+  });
+
+  socket.on("new_ice_candidate", (candidate: any) => {
+    otherPerson(socket).emit("ice_candidate_client", candidate);
   });
 
   socket.on("disconnect", () => {

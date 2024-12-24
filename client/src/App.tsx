@@ -31,23 +31,39 @@ function App() {
     const handleSDPAnswerClient = (offer: RTCSessionDescriptionInit) => {
       console.log("sdp answer was requested (client)");
       receiveOffer(offer);
+      console.log("can accept trick candidates", peerConnectionRef.current);
     };
 
     const handleSDPFinishClient = (offer: RTCSessionDescriptionInit) => {
       console.log("sdp finish was requested (client)");
       finishSDP(offer);
+      console.log("can accept trick candidates", peerConnectionRef.current);
+    };
+
+    const handleReceiveIceCandidate = (candidate: RTCIceCandidate) => {
+      console.log("ice candidate received");
+      receiveIceCandidate(candidate);
     };
 
     socket.on("connect", handleConnect);
     socket.on("sdp_offer_client", handleSDPOfferClient);
     socket.on("sdp_answer_client", handleSDPAnswerClient);
     socket.on("sdp_finish_client", handleSDPFinishClient);
+    socket.on("ice_candidate_client", handleReceiveIceCandidate);
+
+    peerConnectionRef.current.addEventListener("icecandidate", (event) => {
+      if (event.candidate) {
+        console.log("new ice candidate (client)");
+        socket.emit("new_ice_candidate", event.candidate);
+      }
+    });
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("sdp_offer_client", handleSDPOfferClient);
       socket.off("sdp_answer_client", handleSDPAnswerClient);
       socket.off("sdp_finish_client", handleSDPFinishClient);
+      socket.off("ice_candidate_client", handleReceiveIceCandidate);
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
@@ -77,6 +93,14 @@ function App() {
       peerConnectionRef.current = new RTCPeerConnection(configuration);
     }
     await peerConnectionRef.current.setRemoteDescription(answer);
+  }
+
+  async function receiveIceCandidate(candidate: RTCIceCandidate) {
+    try {
+      await peerConnectionRef.current?.addIceCandidate(candidate);
+    } catch (e) {
+      console.log("Error adding received ice candidate", e);
+    }
   }
 
   function handleClick() {
