@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
-import LocalVideoChat from "./localvideochat.tsx";
-import RemoteVideoChat from "./remotevideochat.tsx";
+import VideoChat from "./videochat.tsx";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:8080");
@@ -13,6 +12,7 @@ const configuration = {
 function App() {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState(false);
 
   useEffect(() => {
@@ -59,6 +59,7 @@ function App() {
       }
     });
     peerConnectionRef.current.addEventListener("track", (event) => {
+      console.log("got track");
       const [remoteStream] = event.streams;
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStream;
@@ -121,6 +122,9 @@ function App() {
   async function handleClick() {
     const constraints = { audio: true, video: true };
     const localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+    }
     localStream.getTracks().forEach((track) => {
       peerConnectionRef.current?.addTrack(track, localStream);
     });
@@ -130,11 +134,8 @@ function App() {
     <>
       <div className="card"></div>
       <button onClick={handleClick}>Next Person</button>
-      <LocalVideoChat />
-      <RemoteVideoChat
-        remoteVideoRef={remoteVideoRef}
-        updateTrigger={updateTrigger}
-      />
+      <VideoChat videoRef={localVideoRef} updateTrigger={updateTrigger} />
+      <VideoChat videoRef={remoteVideoRef} updateTrigger={updateTrigger} />
     </>
   );
 }
