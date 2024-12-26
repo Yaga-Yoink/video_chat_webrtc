@@ -11,6 +11,8 @@ const configuration = {
 
 function App() {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream>(new MediaStream());
+  const remoteStreamRef = useRef<MediaStream>(new MediaStream());
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState(false);
@@ -19,10 +21,6 @@ function App() {
     if (!peerConnectionRef.current) {
       peerConnectionRef.current = new RTCPeerConnection(configuration);
     }
-
-    const handleConnect = () => {
-      console.log("user connected to server with socketio");
-    };
 
     const handleSDPOfferClient = () => {
       console.log("sdp offer was requested (client)");
@@ -46,7 +44,6 @@ function App() {
       receiveIceCandidate(candidate);
     };
 
-    socket.on("connect", handleConnect);
     socket.on("sdp_offer_client", handleSDPOfferClient);
     socket.on("sdp_answer_client", handleSDPAnswerClient);
     socket.on("sdp_finish_client", handleSDPFinishClient);
@@ -58,17 +55,38 @@ function App() {
         socket.emit("new_ice_candidate", event.candidate);
       }
     });
+
+    peerConnectionRef.current.addEventListener("connectionstatechange", () => {
+      switch (peerConnectionRef.current?.connectionState) {
+        case "connected":
+          if (!localStreamRef.current) {
+            start();
+          }
+          const videoTrack = localStreamRef.current?.getVideoTracks()[0];
+          const audioTrack = localStreamRef.current?.getAudioTracks()[0];
+          if (videoTrack && audioTrack) {
+            peerConnectionRef.current.addTrack(videoTrack);
+            peerConnectionRef.current.addTrack(audioTrack);
+          }
+      }
+    });
+
     peerConnectionRef.current.addEventListener("track", (event) => {
-      console.log("got track");
-      const [remoteStream] = event.streams;
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStream;
+      if (remoteStreamRef.current) {
+        remoteStreamRef.current.addTrack(event.track);
+      }
+      if (
+        remoteStreamRef.current?.getAudioTracks().length === 1 &&
+        remoteStreamRef.current?.getVideoTracks().length === 1
+      ) {
+        console.log("inside remotestreamref");
+        remoteVideoRef.current!.srcObject = remoteStreamRef.current;
+        console.log("remote video", remoteVideoRef.current);
         setUpdateTrigger(!updateTrigger);
       }
     });
 
     return () => {
-      socket.off("connect", handleConnect);
       socket.off("sdp_offer_client", handleSDPOfferClient);
       socket.off("sdp_answer_client", handleSDPAnswerClient);
       socket.off("sdp_finish_client", handleSDPFinishClient);
@@ -82,12 +100,8 @@ function App() {
 
   async function makeOffer() {
     if (!peerConnectionRef.current) return;
-    peerConnectionRef.current.addTransceiver("video", {
-      direction: "sendrecv",
-    });
-    peerConnectionRef.current.addTransceiver("audio", {
-      direction: "sendrecv",
-    });
+    peerConnectionRef.current.addTransceiver("video");
+    peerConnectionRef.current.addTransceiver("audio");
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit("sdp_offer_server", offer);
@@ -119,21 +133,23 @@ function App() {
   }
 
   //TODO: add the functioanlity to switch to next person
-  async function handleClick() {
+  async function start() {
     const constraints = { audio: true, video: true };
     const localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    localStreamRef.current = localStream;
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = localStream;
     }
-    localStream.getTracks().forEach((track) => {
-      peerConnectionRef.current?.addTrack(track, localStream);
-    });
+    // localStream.getTracks().forEach((track) => {
+    //   peerConnectionRef.current?.addTrack(track, localStream);
+    // });
   }
 
   return (
     <>
       <div className="card"></div>
-      <button onClick={handleClick}>Next Person</button>
+      <button onClick={start}>Start</button>
+      {/* <button onClick={handleClick}>Next Person</button> */}
       <VideoChat videoRef={localVideoRef} updateTrigger={updateTrigger} />
       <VideoChat videoRef={remoteVideoRef} updateTrigger={updateTrigger} />
     </>
