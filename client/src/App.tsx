@@ -137,6 +137,13 @@ function App() {
     const constraints = { audio: true, video: true };
     const localStream = await navigator.mediaDevices.getUserMedia(constraints);
     localStreamRef.current = localStream;
+
+    //TEMP:: USED FOR TESTING WHILE IMPROVING UI
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = localStream;
+    }
+    //
+
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = localStream;
     }
@@ -147,11 +154,24 @@ function App() {
 
   return (
     <>
-      <div className="card"></div>
-      <button onClick={start}>Start</button>
-      {/* <button onClick={handleClick}>Next Person</button> */}
-      <VideoChat videoRef={localVideoRef} updateTrigger={updateTrigger} />
-      <VideoChat videoRef={remoteVideoRef} updateTrigger={updateTrigger} />
+      <div className="left">
+        <div className="top">
+          <div className="video_box">
+            <VideoChat
+              videoRef={remoteVideoRef}
+              updateTrigger={updateTrigger}
+            />
+          </div>
+        </div>
+        <div className="bottom">
+          <div className="video_box">
+            <VideoChat videoRef={localVideoRef} updateTrigger={updateTrigger} />
+          </div>
+        </div>
+      </div>
+      <div className="right">
+        <button onClick={start}>Start</button>
+      </div>
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { FC } from "react";
+import "./videochat.css";
 
 interface VideoChatProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -7,12 +8,9 @@ interface VideoChatProps {
 
 const VideoChat: FC<VideoChatProps> = ({ videoRef, updateTrigger }) => {
   updateTrigger;
-  console.log("rerendered video");
+  console.log("rerendered video", videoRef);
   return (
-    <div>
-      <p>hello im here</p>
-      <video width="250" ref={videoRef} autoPlay controls={false}></video>
-    </div>
+    <video className="video" ref={videoRef} autoPlay controls={false}></video>
   );
 };
 
