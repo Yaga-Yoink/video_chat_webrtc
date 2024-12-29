@@ -3,7 +3,7 @@ import "./videochat.css";
 import { io } from "socket.io-client";
 
 interface VideoChatProps {
-  startFlag: boolean;
+  startFlag: number;
 }
 
 const socket = io("http://localhost:8080");
@@ -135,8 +135,11 @@ const VideoChat: FC<VideoChatProps> = ({ startFlag }) => {
     }
   }
 
+  // Gets the local media stream once startFlag is not 0, indicating the user wants to start connection
   useEffect(() => {
-    start();
+    if (startFlag != 0) {
+      start();
+    }
   }, [startFlag]);
 
   //TODO: add the functioanlity to switch to next person
