@@ -19,6 +19,7 @@
 }
 
 .top {
+  height: 50%;
   position:relative;
   overflow: hidden;
   flex-grow:1;
@@ -28,6 +29,7 @@
 }
 
 .bottom {
+  height: 50%;
   position:relative;
   overflow: hidden;
   flex-grow:1;
