@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import VideoChat from "./videochat.tsx";
+import TextChat from "./textchat.tsx";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:8080");
@@ -170,7 +171,8 @@ function App() {
         </div>
       </div>
       <div className="right">
-        <button onClick={start}>Start</button>
+        <TextChat onButtonClick={() => start()} />
+        {/* <button onClick={start}>Start</button> */}
       </div>
     </>
   );

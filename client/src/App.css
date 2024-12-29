@@ -18,11 +18,21 @@
   flex-direction:column;
 }
 
-.top, .bottom {
+.top {
   position:relative;
   overflow: hidden;
   flex-grow:1;
-  padding: 10px;
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-bottom: 10px;
+}
+
+.bottom {
+  position:relative;
+  overflow: hidden;
+  flex-grow:1;
+  padding-bottom: 10px;
+  padding-left: 10px;
 }
 
 .video_box {

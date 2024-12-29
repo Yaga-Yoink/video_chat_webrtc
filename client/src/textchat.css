@@ -1,0 +1,25 @@
+.chat {
+    height: 85%;
+    padding: 10px;
+    background-clip: content-box;
+    background-color: gray;
+}
+
+.bottom_bar {
+    height: 15%;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+}
+
+.connect_button {
+    width: 20%;
+    margin-right: 10px;    
+
+}
+
+.user_message {
+    width: 80%;
+}
