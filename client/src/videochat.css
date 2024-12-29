@@ -1,17 +1,3 @@
-.video_top, .video_bottom {
-    position:relative;
-    overflow: hidden;
-    flex-grow:1;
-    padding: 10px;
-  }
-  
-  .video_box {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    object-position:center; 
-  }
-
 .video {
     width: 100%;
     height: 100%;
