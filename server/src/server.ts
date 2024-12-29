@@ -41,23 +41,25 @@ function otherPerson(socket: any) {
 app.use(cors());
 
 io.on("connection", (socket: any) => {
-  console.log("a user has connected");
-  users.push(socket);
-  // if there is a pair of users, match them and put them in a room
-  // then ask one of them for sdp offer
-  if (users.length % 2 === 0) {
-    let user1 = users.pop();
-    let user2 = users.pop();
-    let roomid = user1.id + user2.id;
-    user_to_roomid.set(user1.id, roomid);
-    user_to_roomid.set(user2.id, roomid);
-    roomid_to_room.set(roomid, [user1, user2]);
-    console.log(`a room was created with ${user1.id} ${user2.id}`);
-    printRoomSocketIds();
-    // request the first offer from the user A
-    user1.emit("sdp_offer_client");
-    console.log(`${user1.id} : sdp offer was requested (server)`);
-  }
+  socket.on("sdp_start", () => {
+    console.log("a user has connected");
+    users.push(socket);
+    // if there is a pair of users, match them and put them in a room
+    // then ask one of them for sdp offer
+    if (users.length % 2 === 0) {
+      let user1 = users.pop();
+      let user2 = users.pop();
+      let roomid = user1.id + user2.id;
+      user_to_roomid.set(user1.id, roomid);
+      user_to_roomid.set(user2.id, roomid);
+      roomid_to_room.set(roomid, [user1, user2]);
+      console.log(`a room was created with ${user1.id} ${user2.id}`);
+      printRoomSocketIds();
+      // request the first offer from the user A
+      user1.emit("sdp_offer_client");
+      console.log(`${user1.id} : sdp offer was requested (server)`);
+    }
+  });
   // take the first offer from user A and send it to user B
   socket.on("sdp_offer_server", (offer: any) => {
     console.log(`sdp offer was received from client`);
@@ -77,7 +79,7 @@ io.on("connection", (socket: any) => {
   socket.on("new_ice_candidate", (candidate: any) => {
     otherPerson(socket).emit("ice_candidate_client", candidate);
   });
-
+  // TODO: need to handle the case where user wants to get a new connection
   socket.on("disconnect", () => {
     // user was in queue matching
     if (users.includes(socket)) {
@@ -96,6 +98,7 @@ io.on("connection", (socket: any) => {
             roomid_to_room.delete(roomid);
             user_to_roomid.delete(socket.id);
             users.push(other_user);
+            other_user.emit("reset_connection");
           } else {
             console.error("Other user not found in the room");
           }

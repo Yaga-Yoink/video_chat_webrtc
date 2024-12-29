@@ -12,11 +12,16 @@ const configuration = {
 
 function App() {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const localStreamRef = useRef<MediaStream>(new MediaStream());
-  const remoteStreamRef = useRef<MediaStream>(new MediaStream());
+  // media streams for creating the video refs
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
+  // the refs which store the video for the html tag
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  // flag for making videochat re render
   const [updateTrigger, setUpdateTrigger] = useState(false);
+  // flag for a resetting the peer connection (changed when the user wants to meet a new person)
+  const [resetConnection, setResetConnection] = useState(false);
 
   useEffect(() => {
     if (!peerConnectionRef.current) {
@@ -49,6 +54,11 @@ function App() {
     socket.on("sdp_answer_client", handleSDPAnswerClient);
     socket.on("sdp_finish_client", handleSDPFinishClient);
     socket.on("ice_candidate_client", handleReceiveIceCandidate);
+    // change the flag so that the useeffect runs the cleanup function
+    socket.on("reset_connection", () => {
+      console.log("reseting connection");
+      setResetConnection(!resetConnection);
+    });
 
     peerConnectionRef.current.addEventListener("icecandidate", (event) => {
       if (event.candidate) {
@@ -60,32 +70,40 @@ function App() {
     peerConnectionRef.current.addEventListener("connectionstatechange", () => {
       switch (peerConnectionRef.current?.connectionState) {
         case "connected":
-          if (!localStreamRef.current) {
-            start();
+          let tracks = peerConnectionRef.current.getReceivers();
+          if (!remoteStreamRef.current) {
+            remoteStreamRef.current = new MediaStream();
+            remoteStreamRef.current.addTrack(tracks[0].track);
+            remoteStreamRef.current.addTrack(tracks[1].track);
+          } else {
+            remoteStreamRef.current.addTrack(tracks[0].track);
+            remoteStreamRef.current.addTrack(tracks[1].track);
           }
-          const videoTrack = localStreamRef.current?.getVideoTracks()[0];
-          const audioTrack = localStreamRef.current?.getAudioTracks()[0];
-          if (videoTrack && audioTrack) {
-            peerConnectionRef.current.addTrack(videoTrack);
-            peerConnectionRef.current.addTrack(audioTrack);
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current!.srcObject = remoteStreamRef.current;
+            console.log("remotevideoref", remoteVideoRef.current);
+            console.log("remotestreamref", remoteStreamRef.current);
           }
+          setUpdateTrigger(!updateTrigger);
+        // console.log("connected", peerConnectionRef.current.getReceivers());
       }
     });
 
-    peerConnectionRef.current.addEventListener("track", (event) => {
-      if (remoteStreamRef.current) {
-        remoteStreamRef.current.addTrack(event.track);
-      }
-      if (
-        remoteStreamRef.current?.getAudioTracks().length === 1 &&
-        remoteStreamRef.current?.getVideoTracks().length === 1
-      ) {
-        console.log("inside remotestreamref");
-        remoteVideoRef.current!.srcObject = remoteStreamRef.current;
-        console.log("remote video", remoteVideoRef.current);
-        setUpdateTrigger(!updateTrigger);
-      }
-    });
+    // peerConnectionRef.current.addEventListener("track", (event) => {
+    //   if (remoteStreamRef.current) {
+    //     console.log("added track to remote stream ref");
+    //     remoteStreamRef.current.addTrack(event.track);
+    //   }
+    //   if (
+    //     remoteStreamRef.current?.getAudioTracks().length === 1 &&
+    //     remoteStreamRef.current?.getVideoTracks().length === 1
+    //   ) {
+    //     console.log("inside remotestreamref", remoteStreamRef);
+    //     remoteVideoRef.current!.srcObject = remoteStreamRef.current;
+    //     console.log("remote video", remoteVideoRef.current);
+    //     setUpdateTrigger(!updateTrigger);
+    //   }
+    // });
 
     return () => {
       socket.off("sdp_offer_client", handleSDPOfferClient);
@@ -97,12 +115,10 @@ function App() {
         peerConnectionRef.current = null;
       }
     };
-  }, []);
+  }, [resetConnection]);
 
   async function makeOffer() {
     if (!peerConnectionRef.current) return;
-    peerConnectionRef.current.addTransceiver("video");
-    peerConnectionRef.current.addTransceiver("audio");
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit("sdp_offer_server", offer);
@@ -139,18 +155,19 @@ function App() {
     const localStream = await navigator.mediaDevices.getUserMedia(constraints);
     localStreamRef.current = localStream;
 
-    //TEMP:: USED FOR TESTING WHILE IMPROVING UI
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = localStream;
-    }
-    //
+    // //TEMP:: USED FOR TESTING WHILE IMPROVING UI
+    // if (remoteVideoRef.current) {
+    //   remoteVideoRef.current.srcObject = localStream;
+    // }
+    // //
 
     if (localVideoRef.current) {
-      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.srcObject = localStreamRef.current;
     }
-    // localStream.getTracks().forEach((track) => {
-    //   peerConnectionRef.current?.addTrack(track, localStream);
-    // });
+    localStream.getTracks().forEach((track) => {
+      peerConnectionRef.current?.addTrack(track, localStream);
+    });
+    socket.emit("sdp_start");
   }
 
   return (
@@ -172,7 +189,6 @@ function App() {
       </div>
       <div className="right">
         <TextChat onButtonClick={() => start()} />
-        {/* <button onClick={start}>Start</button> */}
       </div>
     </>
   );

@@ -8,7 +8,7 @@ interface VideoChatProps {
 
 const VideoChat: FC<VideoChatProps> = ({ videoRef, updateTrigger }) => {
   updateTrigger;
-  console.log("rerendered video", videoRef);
+  console.log(videoRef.current?.srcObject, "rerender");
   return (
     <video className="video" ref={videoRef} autoPlay controls={false}></video>
   );
