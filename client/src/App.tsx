@@ -13,8 +13,8 @@ const configuration = {
 function App() {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   // media streams for creating the video refs
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream>(new MediaStream());
+  const remoteStreamRef = useRef<MediaStream>(new MediaStream());
   // the refs which store the video for the html tag
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -71,6 +71,7 @@ function App() {
       switch (peerConnectionRef.current?.connectionState) {
         case "connected":
           let tracks = peerConnectionRef.current.getReceivers();
+          // need to be careful with ? null chaining, remotestreamref was null and thus video tracks weren't being added
           if (!remoteStreamRef.current) {
             remoteStreamRef.current = new MediaStream();
             remoteStreamRef.current.addTrack(tracks[0].track);
@@ -114,11 +115,15 @@ function App() {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      remoteStreamRef.current = new MediaStream();
     };
   }, [resetConnection]);
 
   async function makeOffer() {
     if (!peerConnectionRef.current) return;
+    localStreamRef.current.getTracks().forEach((track) => {
+      peerConnectionRef.current?.addTrack(track, localStreamRef.current);
+    });
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit("sdp_offer_server", offer);
@@ -126,6 +131,9 @@ function App() {
 
   async function receiveOffer(offer: RTCSessionDescriptionInit) {
     if (!peerConnectionRef.current) return;
+    localStreamRef.current.getTracks().forEach((track) => {
+      peerConnectionRef.current?.addTrack(track, localStreamRef.current);
+    });
     await peerConnectionRef.current.setRemoteDescription(
       new RTCSessionDescription(offer)
     );
@@ -164,9 +172,9 @@ function App() {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = localStreamRef.current;
     }
-    localStream.getTracks().forEach((track) => {
-      peerConnectionRef.current?.addTrack(track, localStream);
-    });
+    // localStream.getTracks().forEach((track) => {
+    //   peerConnectionRef.current?.addTrack(track, localStream);
+    // });
     socket.emit("sdp_start");
   }
 
