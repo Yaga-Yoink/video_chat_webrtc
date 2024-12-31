@@ -8,13 +8,16 @@ const messages = require("./messages.ts");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
+  cors: { origin: "http://localhost:5173" },
 });
 
 const roomid_to_room: Map<string, Array<any>> = new Map();
 const user_to_roomid = new Map();
 const users: any[] = [];
 
+/**
+ * Print the socket ids for each socket in each room
+ */
 function printRoomSocketIds() {
   roomid_to_room.forEach((users, roomid) => {
     const socketIds = users.map((user) => user.id);
@@ -25,13 +28,20 @@ function printRoomSocketIds() {
 /**
  * Return the other person in the room give a user's opened socket
  * @param socket the user's opened socket with the srever
+ * @throws Error if 'socket' is not in a room.
  */
 function otherPerson(socket: any) {
   let roomid = user_to_roomid.get(socket.id);
+  if (roomid === undefined) {
+    throw new Error("Room Error");
+  }
   if (roomid) {
     let other_user = roomid_to_room
       .get(roomid)
       ?.find((elem) => elem.id !== socket.id);
+    if (other_user === undefined) {
+      throw new Error("Other User Error");
+    }
     return other_user;
   } else {
     console.error("Room ID not found for the user");
@@ -41,8 +51,9 @@ function otherPerson(socket: any) {
 app.use(cors());
 
 io.on("connection", (socket: any) => {
+  console.log("a user has connected");
   socket.on("sdp_start", () => {
-    console.log("a user has connected");
+    console.log("a user has requested sdp start");
     users.push(socket);
     // if there is a pair of users, match them and put them in a room
     // then ask one of them for sdp offer
@@ -84,35 +95,17 @@ io.on("connection", (socket: any) => {
       // Do nothing if the user is already in the queue waiting for a peer
     } else {
       let roomid = user_to_roomid.get(socket.id);
-      if (roomid) {
-        let room = roomid_to_room.get(roomid);
-        if (room) {
-          let other_user = room.find((elem: any) => elem.id !== socket.id);
-          if (other_user) {
-            // delete the room
-            roomid_to_room.delete(roomid);
-            // delete the mapping from the users to the room
-            user_to_roomid.delete(socket.id);
-            user_to_roomid.delete(other_user.id);
-            // // add the users back to the queue
-            // users.push(other_user);
-            // users.push(socket);
-            // // ask the users to reset their connection (fixes things like resetting peer connection)
-            other_user.emit("reset_connection");
-            socket.emit("reset_connection");
-          } else {
-            console.error("Other user not found in the room");
-          }
-        } else {
-          console.error("Room ID not found for the user");
-        }
-      } else {
-        console.error("Room ID not found for the user");
-      }
+      let other_user = otherPerson(socket);
+      roomid_to_room.delete(roomid);
+      // delete the mapping from the users to the room
+      user_to_roomid.delete(socket.id);
+      user_to_roomid.delete(other_user.id);
+      // ask the users to reset their connection (fixes things like resetting peer connection)
+      other_user.emit("reset_connection");
+      socket.emit("reset_connection");
       console.log("a user has requested a new peer");
     }
   });
-  // TODO: need to handle the case where user wants to get a new connection
   socket.on("disconnect", () => {
     // user was in queue matching
     if (users.includes(socket)) {
@@ -120,27 +113,13 @@ io.on("connection", (socket: any) => {
       console.log("a user has disconnected");
     }
     // user was in a room
-    // TODO: handle the case where we need to make a new room and run the p2p process if the there was an odd number of users already in the queueu
     else {
       let roomid = user_to_roomid.get(socket.id);
-      if (roomid) {
-        let room = roomid_to_room.get(roomid);
-        if (room) {
-          let other_user = room.find((elem: any) => elem.id !== socket.id);
-          if (other_user) {
-            roomid_to_room.delete(roomid);
-            user_to_roomid.delete(socket.id);
-            user_to_roomid.delete(other_user.id);
-            other_user.emit("reset_connection");
-          } else {
-            console.error("Other user not found in the room");
-          }
-        } else {
-          console.error("Room ID not found for the user");
-        }
-      } else {
-        console.error("Room ID not found for the user");
-      }
+      let other_user = otherPerson(socket);
+      roomid_to_room.delete(roomid);
+      user_to_roomid.delete(socket.id);
+      user_to_roomid.delete(other_user.id);
+      other_user.emit("reset_connection");
       console.log("a user has disconnected");
     }
   });
