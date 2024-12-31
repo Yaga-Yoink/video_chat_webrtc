@@ -79,6 +79,39 @@ io.on("connection", (socket: any) => {
   socket.on("new_ice_candidate", (candidate: any) => {
     otherPerson(socket).emit("ice_candidate_client", candidate);
   });
+  socket.on("request_new_peer", () => {
+    if (users.includes(socket)) {
+      // Do nothing if the user is already in the queue waiting for a peer
+    } else {
+      let roomid = user_to_roomid.get(socket.id);
+      if (roomid) {
+        let room = roomid_to_room.get(roomid);
+        if (room) {
+          let other_user = room.find((elem: any) => elem.id !== socket.id);
+          if (other_user) {
+            // delete the room
+            roomid_to_room.delete(roomid);
+            // delete the mapping from the users to the room
+            user_to_roomid.delete(socket.id);
+            user_to_roomid.delete(other_user.id);
+            // // add the users back to the queue
+            // users.push(other_user);
+            // users.push(socket);
+            // // ask the users to reset their connection (fixes things like resetting peer connection)
+            other_user.emit("reset_connection");
+            socket.emit("reset_connection");
+          } else {
+            console.error("Other user not found in the room");
+          }
+        } else {
+          console.error("Room ID not found for the user");
+        }
+      } else {
+        console.error("Room ID not found for the user");
+      }
+      console.log("a user has requested a new peer");
+    }
+  });
   // TODO: need to handle the case where user wants to get a new connection
   socket.on("disconnect", () => {
     // user was in queue matching
@@ -97,7 +130,7 @@ io.on("connection", (socket: any) => {
           if (other_user) {
             roomid_to_room.delete(roomid);
             user_to_roomid.delete(socket.id);
-            users.push(other_user);
+            user_to_roomid.delete(other_user.id);
             other_user.emit("reset_connection");
           } else {
             console.error("Other user not found in the room");

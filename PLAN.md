@@ -38,3 +38,16 @@ prettier code formatting
 12/23/2024 - need to figure out how to determine which person is the receiver and which person is the caller - server adds people to queue one at at time - when queue has more than two people make a room - designate one person as a caller one person as a receiver - ping each one and ask for a call and receive
 
 - need to fix the issue with many peer connections being made for each client request
+
+12/30/2024
+
+- RTC connections are working now between peers
+- Need to add functionality for not disconnecting entirely, but just requesting a new peer
+- Need to add more checks for whether things are null or have been updated
+  - Such as the media, to check if the user turned off their camera or something and need to request for it again
+- Text only option as well for the users to chat
+  - RTC send file between peers
+- Clean up code and modularize it
+- Possibly add thingsl like themed rooms where users can join specific themed rooms
+  - Add a postgres database to the server end
+- Figure out how to deploy it in production

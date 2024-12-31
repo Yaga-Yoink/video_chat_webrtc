@@ -3,15 +3,16 @@ import "./textchat.css";
 
 interface TextChatProps {
   onButtonClick: any;
+  buttonState: string;
 }
 
-const TextChat: FC<TextChatProps> = ({ onButtonClick }) => {
+const TextChat: FC<TextChatProps> = ({ onButtonClick, buttonState }) => {
   return (
     <>
       <div className="chat"></div>
       <div className="bottom_bar">
         <button className="connect_button" onClick={onButtonClick}>
-          Connect
+          {buttonState}
         </button>
         <input className="user_message" type="text"></input>
       </div>

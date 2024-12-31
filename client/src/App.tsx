@@ -22,10 +22,15 @@ function App() {
   const [updateTrigger, setUpdateTrigger] = useState(false);
   // flag for a resetting the peer connection (changed when the user wants to meet a new person)
   const [resetConnection, setResetConnection] = useState(false);
+  // button state
+  const [buttonState, setButtonState] = useState<string>("Start");
 
   useEffect(() => {
     if (!peerConnectionRef.current) {
       peerConnectionRef.current = new RTCPeerConnection(configuration);
+    }
+    if (buttonState === "New Person") {
+      socket.emit("sdp_start");
     }
 
     const handleSDPOfferClient = () => {
@@ -90,22 +95,6 @@ function App() {
       }
     });
 
-    // peerConnectionRef.current.addEventListener("track", (event) => {
-    //   if (remoteStreamRef.current) {
-    //     console.log("added track to remote stream ref");
-    //     remoteStreamRef.current.addTrack(event.track);
-    //   }
-    //   if (
-    //     remoteStreamRef.current?.getAudioTracks().length === 1 &&
-    //     remoteStreamRef.current?.getVideoTracks().length === 1
-    //   ) {
-    //     console.log("inside remotestreamref", remoteStreamRef);
-    //     remoteVideoRef.current!.srcObject = remoteStreamRef.current;
-    //     console.log("remote video", remoteVideoRef.current);
-    //     setUpdateTrigger(!updateTrigger);
-    //   }
-    // });
-
     return () => {
       socket.off("sdp_offer_client", handleSDPOfferClient);
       socket.off("sdp_answer_client", handleSDPAnswerClient);
@@ -158,24 +147,29 @@ function App() {
   }
 
   //TODO: add the functioanlity to switch to next person
-  async function start() {
-    const constraints = { audio: true, video: true };
-    const localStream = await navigator.mediaDevices.getUserMedia(constraints);
-    localStreamRef.current = localStream;
+  async function userButtonHandler() {
+    if (buttonState === "Start") {
+      const constraints = { audio: true, video: true };
+      const localStream = await navigator.mediaDevices.getUserMedia(
+        constraints
+      );
+      localStreamRef.current = localStream;
 
-    // //TEMP:: USED FOR TESTING WHILE IMPROVING UI
-    // if (remoteVideoRef.current) {
-    //   remoteVideoRef.current.srcObject = localStream;
-    // }
-    // //
+      // //TEMP:: USED FOR TESTING WHILE IMPROVING UI
+      // if (remoteVideoRef.current) {
+      //   remoteVideoRef.current.srcObject = localStream;
+      // }
+      // //
 
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = localStreamRef.current;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      socket.emit("sdp_start");
+      setButtonState("New Person");
     }
-    // localStream.getTracks().forEach((track) => {
-    //   peerConnectionRef.current?.addTrack(track, localStream);
-    // });
-    socket.emit("sdp_start");
+    if (buttonState === "New Person") {
+      socket.emit("request_new_peer");
+    }
   }
 
   return (
@@ -196,7 +190,10 @@ function App() {
         </div>
       </div>
       <div className="right">
-        <TextChat onButtonClick={() => start()} />
+        <TextChat
+          onButtonClick={() => userButtonHandler()}
+          buttonState={buttonState}
+        />
       </div>
     </>
   );
