@@ -66,3 +66,9 @@ prettier code formatting
 - make the ui nice
   - add a nice font or something
   - change colors
+
+01/01/2025
+
+- Goenix
+- Add a home bar
+- Add authentication
