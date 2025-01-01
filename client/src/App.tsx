@@ -24,6 +24,7 @@ function App() {
   const [resetConnection, setResetConnection] = useState(false);
   // button state
   const [buttonState, setButtonState] = useState<string>("Start");
+  // data channel for text chat
 
   useEffect(() => {
     if (!peerConnectionRef.current) {
@@ -172,6 +173,11 @@ function App() {
     }
   }
 
+  async function sendMessage(message: string) {
+    console.log("User sent: ", message);
+    // peerConnectionRef.current.send;
+  }
+
   return (
     <>
       <div className="left">
@@ -193,6 +199,7 @@ function App() {
         <TextChat
           onButtonClick={() => userButtonHandler()}
           buttonState={buttonState}
+          sendMessage={(message: string) => sendMessage(message)}
         />
       </div>
     </>
