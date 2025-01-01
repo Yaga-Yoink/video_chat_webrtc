@@ -25,11 +25,15 @@ function App() {
   // button state
   const [buttonState, setButtonState] = useState<string>("Start");
   // data channel for text chat
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  // current text in the chat
+  const [chatText, setChatText] = useState<string>("");
 
   useEffect(() => {
     if (!peerConnectionRef.current) {
       peerConnectionRef.current = new RTCPeerConnection(configuration);
     }
+
     if (buttonState === "New Person") {
       socket.emit("sdp_start");
     }
@@ -96,6 +100,19 @@ function App() {
       }
     });
 
+    peerConnectionRef.current.addEventListener("datachannel", (event) => {
+      console.log("received data channel", event.channel);
+      dataChannelRef.current = event.channel;
+      dataChannelRef.current.addEventListener("message", (event) => {
+        console.log("message received", event.data);
+        console.log(`${chatText}\n${event.data}`);
+        // use updater function to use previous state in new update
+        // TODO: fix event handler
+        setChatText((prev) => `${prev}\n${event.data}`);
+        console.log("chat text was set to", chatText);
+      });
+    });
+
     return () => {
       socket.off("sdp_offer_client", handleSDPOfferClient);
       socket.off("sdp_answer_client", handleSDPAnswerClient);
@@ -114,6 +131,19 @@ function App() {
     localStreamRef.current.getTracks().forEach((track) => {
       peerConnectionRef.current?.addTrack(track, localStreamRef.current);
     });
+    dataChannelRef.current =
+      peerConnectionRef.current.createDataChannel("text_chat");
+
+    dataChannelRef.current.addEventListener("message", (event) => {
+      console.log("message received", event.data);
+      console.log(`${chatText}\n${event.data}`);
+      // use updater function to use previous state in new update
+      // TODO: fix event handler
+      setChatText((prev) => `${prev}\n${event.data}`);
+      console.log("chat text was set to", chatText);
+    });
+    console.log("in make offer", dataChannelRef.current);
+
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit("sdp_offer_server", offer);
@@ -175,7 +205,10 @@ function App() {
 
   async function sendMessage(message: string) {
     console.log("User sent: ", message);
-    // peerConnectionRef.current.send;
+    console.log(dataChannelRef.current);
+    if (dataChannelRef.current) {
+      dataChannelRef.current.send(message);
+    }
   }
 
   return (
@@ -200,6 +233,7 @@ function App() {
           onButtonClick={() => userButtonHandler()}
           buttonState={buttonState}
           sendMessage={(message: string) => sendMessage(message)}
+          chatText={chatText}
         />
       </div>
     </>

@@ -5,16 +5,18 @@ interface TextChatProps {
   onButtonClick: any;
   sendMessage: any;
   buttonState: string;
+  chatText: string;
 }
 
 const TextChat: FC<TextChatProps> = ({
   onButtonClick,
   buttonState,
   sendMessage,
+  chatText,
 }) => {
   return (
     <>
-      <div className="chat"></div>
+      <div className="chat">{chatText}</div>
       <div className="bottom_bar">
         <button className="connect_button" onClick={onButtonClick}>
           {buttonState}
