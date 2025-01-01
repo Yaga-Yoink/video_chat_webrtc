@@ -51,3 +51,18 @@ prettier code formatting
 - Possibly add thingsl like themed rooms where users can join specific themed rooms
   - Add a postgres database to the server end
 - Figure out how to deploy it in production
+
+12/31/2024
+
+- Need to directly upload the text to the users screen that sent the message
+  - perhaps only add it to the screen if the message was properly sent (possible feature)
+- Need to get the useState to correctly update the current text chat
+  - The state is not being set for some reason
+- Handle the case where a user was already connected to the server, the server turns off, and then server turns on again
+- Text chat
+  - add user id to the message
+  - make it scrollable
+  - make it scrollable and so it doesnt overflow
+- make the ui nice
+  - add a nice font or something
+  - change colors

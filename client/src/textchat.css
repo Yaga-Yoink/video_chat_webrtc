@@ -1,8 +1,22 @@
-.chat {
-    height: 85%;
+p {
+    white-space: pre-wrap;
+    text-indent: 50px;
+}
+
+.outer_chat {
     padding: 10px;
+    height: 85%;
     background-clip: content-box;
-    background-color: gray;
+    background-color: gray;  
+    overflow: hidden;
+}
+
+.inner_chat {
+    height: 100%;
+    text-wrap: wrap;
+    word-wrap: break-word;
+    overflow-y: scroll;
+    overscroll-behavior: none;
 }
 
 .bottom_bar {

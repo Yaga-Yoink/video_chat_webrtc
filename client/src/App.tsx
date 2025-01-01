@@ -108,7 +108,11 @@ function App() {
         console.log(`${chatText}\n${event.data}`);
         // use updater function to use previous state in new update
         // TODO: fix event handler
-        setChatText((prev) => `${prev}\n${event.data}`);
+        if (chatText === "") {
+          setChatText(`${event.data}`);
+        } else {
+          setChatText((prev) => `${prev}\n${event.data}`);
+        }
         console.log("chat text was set to", chatText);
       });
     });
@@ -206,8 +210,17 @@ function App() {
   async function sendMessage(message: string) {
     console.log("User sent: ", message);
     console.log(dataChannelRef.current);
+    // if the message is just empty, don't send it
+    if (message.replace(/\s/g, "").length === 0) {
+      return;
+    }
     if (dataChannelRef.current) {
       dataChannelRef.current.send(message);
+    }
+    if (chatText === "") {
+      setChatText(message);
+    } else {
+      setChatText(`${chatText}\n${message}`);
     }
   }
 
